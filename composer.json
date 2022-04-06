@@ -1,0 +1,14 @@
+{
+    "name": "utilitte/intl",
+    "require": {
+        "php": ">= 8.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Utilitte\\Intl\\": "src"
+        }
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^1.5"
+    }
+}
