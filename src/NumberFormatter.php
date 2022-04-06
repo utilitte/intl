@@ -16,52 +16,52 @@ abstract class NumberFormatter
 		$this->positiveSign = new PositiveSign();
 	}
 
-	public function withMaxDigits(int $digits): self
+	public function withMaxDigits(int $digits): static
 	{
 		return $this->setAttribute($this->formatter::MAX_INTEGER_DIGITS, $digits);
 	}
 
-	public function withMinDigits(int $digits): self
+	public function withMinDigits(int $digits): static
 	{
 		return $this->setAttribute($this->formatter::MIN_INTEGER_DIGITS, $digits);
 	}
 
-	public function withMaxFraction(int $fraction): self
+	public function withMaxFraction(int $fraction): static
 	{
 		return $this->setAttribute($this->formatter::MAX_FRACTION_DIGITS, $fraction);
 	}
 
-	public function withMinFraction(int $fraction): self
+	public function withMinFraction(int $fraction): static
 	{
 		return $this->setAttribute($this->formatter::MIN_FRACTION_DIGITS, $fraction);
 	}
 
-	public function withExactFraction(int $fraction): self
+	public function withExactFraction(int $fraction): static
 	{
 		return $this->withMinFraction($fraction)->withMaxFraction($fraction);
 	}
 
-	public function withExactDigits(int $digits): self
+	public function withExactDigits(int $digits): static
 	{
 		return $this->withMaxDigits($digits)->withMaxDigits($digits);
 	}
 
-	public function withPositivePrefix(string $prefix): self
+	public function withPositivePrefix(string $prefix): static
 	{
 		return $this->setTextAttribute($this->formatter::POSITIVE_PREFIX, $prefix);
 	}
 
-	public function withPositiveSuffix(string $suffix): self
+	public function withPositiveSuffix(string $suffix): static
 	{
 		return $this->setTextAttribute($this->formatter::POSITIVE_SUFFIX, $suffix);
 	}
 
-	public function withNegativePrefix(string $prefix): self
+	public function withNegativePrefix(string $prefix): static
 	{
 		return $this->setTextAttribute($this->formatter::NEGATIVE_PREFIX, $prefix);
 	}
 
-	public function withNegativeSuffix(string $suffix): self
+	public function withNegativeSuffix(string $suffix): static
 	{
 		return $this->setTextAttribute($this->formatter::NEGATIVE_PREFIX, $suffix);
 	}
@@ -122,7 +122,7 @@ abstract class NumberFormatter
 		}
 	}
 
-	private function setAttribute(int $attribute, float|int $value): self
+	private function setAttribute(int $attribute, float|int $value): static
 	{
 		if ($this->formatter->getAttribute($attribute) === $value) {
 			return $this;
@@ -134,7 +134,7 @@ abstract class NumberFormatter
 		return $clone;
 	}
 
-	private function setTextAttribute(int $attribute, string $value): self
+	private function setTextAttribute(int $attribute, string $value): static
 	{
 		if ($this->formatter->getTextAttribute($attribute) === $value) {
 			return $this;
