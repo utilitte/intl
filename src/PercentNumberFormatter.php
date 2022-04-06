@@ -2,7 +2,7 @@
 
 namespace Utilitte\Intl;
 
-final class PercentNumberFormatter extends NumberFormatter
+class PercentNumberFormatter extends NumberFormatter
 {
 
 	public function __construct(string $locale)

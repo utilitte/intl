@@ -2,7 +2,7 @@
 
 namespace Utilitte\Intl;
 
-final class DecimalNumberFormatter extends NumberFormatter
+class DecimalNumberFormatter extends NumberFormatter
 {
 
 	public function __construct(string $locale)

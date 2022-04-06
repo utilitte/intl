@@ -2,7 +2,7 @@
 
 namespace Utilitte\Intl;
 
-final class CurrencyNumberFormatter extends NumberFormatter
+class CurrencyNumberFormatter extends NumberFormatter
 {
 
 	public function __construct(string $locale)

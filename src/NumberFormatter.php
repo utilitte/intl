@@ -2,18 +2,31 @@
 
 namespace Utilitte\Intl;
 
-use Utilitte\Intl\Extension\PositiveSign;
-
 abstract class NumberFormatter
 {
 
-	private PositiveSign $positiveSign;
+	public const APPEND = 0;
+	public const APPEND_WITH_SPACE = 1;
+	public const PREPEND = 2;
+	public const PREPEND_WITH_SPACE = 3;
+	public const SUBSTITUTE = 4;
+
+	private int $fraction = 0;
+
+	private ?int $fractionStore = null;
 
 	public function __construct(
 		protected \NumberFormatter $formatter,
 	)
 	{
-		$this->positiveSign = new PositiveSign();
+	}
+
+	public function withMiniatureFraction(int $fraction): static
+	{
+		$clone = clone $this;
+		$clone->fraction = $fraction;
+
+		return $clone;
 	}
 
 	public function withMaxDigits(int $digits): static
@@ -46,38 +59,47 @@ abstract class NumberFormatter
 		return $this->withMaxDigits($digits)->withMaxDigits($digits);
 	}
 
-	public function withPositivePrefix(string $prefix): static
+	public function withPositivePrefix(string $prefix, int $type = self::SUBSTITUTE): static
 	{
-		return $this->setTextAttribute($this->formatter::POSITIVE_PREFIX, $prefix);
+		return $this->setTextAttribute($this->formatter::POSITIVE_PREFIX, $prefix, $type);
 	}
 
-	public function withPositiveSuffix(string $suffix): static
+	public function withPositiveSuffix(string $suffix, int $type = self::SUBSTITUTE): static
 	{
-		return $this->setTextAttribute($this->formatter::POSITIVE_SUFFIX, $suffix);
+		return $this->setTextAttribute($this->formatter::POSITIVE_SUFFIX, $suffix, $type);
 	}
 
-	public function withNegativePrefix(string $prefix): static
+	public function withNegativePrefix(string $prefix, int $type = self::SUBSTITUTE): static
 	{
-		return $this->setTextAttribute($this->formatter::NEGATIVE_PREFIX, $prefix);
+		return $this->setTextAttribute($this->formatter::NEGATIVE_PREFIX, $prefix, $type);
 	}
 
-	public function withNegativeSuffix(string $suffix): static
+	public function withNegativeSuffix(string $suffix, int $type = self::SUBSTITUTE): static
 	{
-		return $this->setTextAttribute($this->formatter::NEGATIVE_PREFIX, $suffix);
+		return $this->setTextAttribute($this->formatter::NEGATIVE_PREFIX, $suffix, $type);
 	}
 
-	public function withPositiveSign(bool $alwaysSign = true, bool $append = true): self
+	public function withPositiveSign(bool $display = true, int $type = self::PREPEND): static
 	{
-		$clone = clone $this;
-		$clone->positiveSign->enabled = $alwaysSign;
-		$clone->positiveSign->append = $append;
-
-		return $clone;
+		return $this->withPositivePrefix($display ? '+' : '', $type);
 	}
 
 	public function format(int|float $number): string
 	{
-		return $this->return(fn () => $this->formatter->format($number));
+		$this->fractionStore = null;
+
+		$this->fraction($number);
+		$number = $this->fixNegativeSign($number);
+
+		$formatted = $this->formatter->format($number);
+
+		// after
+
+		if ($this->fractionStore) {
+			$this->formatter->setAttribute($this->formatter::MAX_FRACTION_DIGITS, $this->fractionStore);
+		}
+
+		return $formatted;
 	}
 
 	public function formatExtended(int|float|string $number): string
@@ -97,31 +119,6 @@ abstract class NumberFormatter
 		return $this->format($number);
 	}
 
-	protected function return(callable $callback): string
-	{
-		$this->before();
-
-		$formatted = $callback();
-
-		$this->after();
-
-		return $formatted;
-	}
-
-	protected function before(): void
-	{
-		foreach ([$this->positiveSign] as $extension) {
-			$extension->before($this->formatter);
-		}
-	}
-
-	protected function after(): void
-	{
-		foreach ([$this->positiveSign] as $extension) {
-			$extension->after($this->formatter);
-		}
-	}
-
 	private function setAttribute(int $attribute, float|int $value): static
 	{
 		if ($this->formatter->getAttribute($attribute) === $value) {
@@ -134,13 +131,23 @@ abstract class NumberFormatter
 		return $clone;
 	}
 
-	private function setTextAttribute(int $attribute, string $value): static
+	private function setTextAttribute(int $attribute, string $value, int $type): static
 	{
-		if ($this->formatter->getTextAttribute($attribute) === $value) {
+		$previous = (string) $this->formatter->getTextAttribute($attribute);
+		if ($previous === $value) {
 			return $this;
 		}
 
 		$clone = clone $this;
+
+		$value = match ($type) {
+			self::APPEND => $previous . $value,
+			self::APPEND_WITH_SPACE => ($previous ? $previous . ' ' : '') . $value,
+			self::PREPEND => $value . $previous,
+			self::PREPEND_WITH_SPACE => $value . ($previous ? ' ' . $previous : ''),
+			default => $value,
+		};
+
 		$clone->formatter->setTextAttribute($attribute, $value);
 
 		return $clone;
@@ -149,6 +156,59 @@ abstract class NumberFormatter
 	public function __clone(): void
 	{
 		$this->formatter = clone $this->formatter;
+	}
+
+	private function fraction(float|int $number): void
+	{
+		if ($this->fraction <= 0) {
+			return;
+		}
+
+		if (!is_float($number)) {
+			return;
+		}
+
+		if ($number >= 1 || $number <= -1) {
+			return;
+		}
+
+		$max = max((int) $this->formatter->getAttribute($this->formatter::MAX_FRACTION_DIGITS), 0);
+		$fractionBeforeZero = -1 - (int) floor(log10(abs($number)));
+
+		if ($max > $fractionBeforeZero) {
+			return;
+		}
+
+		if ($this->fraction >= $fractionBeforeZero + 1) {
+			$this->fractionStore = $max;
+			$this->formatter->setAttribute($this->formatter::MAX_FRACTION_DIGITS, $fractionBeforeZero + 1);
+		}
+	}
+
+	private function fixNegativeSign(float|int $number): float|int
+	{
+		if ($this->fractionStore !== null) {
+			return $number;
+		}
+
+		if (!is_float($number)) {
+			return $number;
+		}
+
+		if ($number > 0 && $number >= -1) {
+			return $number;
+		}
+
+		$max = max((int) $this->formatter->getAttribute($this->formatter::MAX_FRACTION_DIGITS), 0);
+
+		$abs = abs($number);
+		$fractionBeforeZero = -1 - (int) floor(log10($abs));
+
+		if ($max > $fractionBeforeZero) {
+			return $number;
+		}
+
+		return $abs;
 	}
 
 }

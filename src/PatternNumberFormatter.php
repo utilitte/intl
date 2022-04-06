@@ -2,12 +2,14 @@
 
 namespace Utilitte\Intl;
 
-final class PatternNumberFormatter extends NumberFormatter
+class PatternNumberFormatter extends NumberFormatter
 {
 
-	public function __construct(string $locale)
+	public function __construct(string $locale, string $pattern)
 	{
 		parent::__construct(new \NumberFormatter($locale, \NumberFormatter::DECIMAL));
+
+		$this->formatter->setPattern($pattern);
 	}
 
 	public function withPattern(string $pattern): self
