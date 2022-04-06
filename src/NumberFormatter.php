@@ -2,6 +2,8 @@
 
 namespace Utilitte\Intl;
 
+use Utilitte\Intl\Stepper\FractionalStepper;
+
 abstract class NumberFormatter
 {
 
@@ -11,16 +13,22 @@ abstract class NumberFormatter
 	public const PREPEND_WITH_SPACE = 3;
 	public const SUBSTITUTE = 4;
 
-	private int $fraction = 0;
-
-	private ?int $fractionStore = null;
-
 	protected bool $percentFormatter = false;
+
+	private ?FractionalStepper $fractionStepper = null;
 
 	public function __construct(
 		protected \NumberFormatter $formatter,
 	)
 	{
+	}
+
+	public function withFractionalStepper(FractionalStepper $fractionalStepper): static
+	{
+		$clone = clone $this;
+		$clone->fractionStepper = $fractionalStepper;
+
+		return $clone;
 	}
 
 	public function withMiniatureFraction(int $fraction): static
@@ -88,18 +96,14 @@ abstract class NumberFormatter
 
 	public function format(int|float $number): string
 	{
-		$this->fractionStore = null;
+		// before
+		$this->fractionStepper?->apply($this->formatter, $number);
 
-		$this->fraction($number);
-		$number = $this->fixNegativeSign($number);
-
-		$formatted = $this->formatter->format($number);
+		// format
+		$formatted = $this->formatter->format($this->fixNegativeSign($number));
 
 		// after
-
-		if ($this->fractionStore) {
-			$this->formatter->setAttribute($this->formatter::MAX_FRACTION_DIGITS, $this->fractionStore);
-		}
+		$this->fractionStepper?->rollback($this->formatter);
 
 		return $formatted;
 	}
@@ -160,39 +164,8 @@ abstract class NumberFormatter
 		$this->formatter = clone $this->formatter;
 	}
 
-	private function fraction(float|int $number): void
-	{
-		if ($this->fraction <= 0) {
-			return;
-		}
-
-		if (!is_float($number)) {
-			return;
-		}
-
-		if ($number >= 1 || $number <= -1) {
-			return;
-		}
-
-		$max = max((int) $this->formatter->getAttribute($this->formatter::MAX_FRACTION_DIGITS), 0);
-		$fractionBeforeZero = -1 - (int) floor(log10(abs($number)));
-
-		if ($max > $fractionBeforeZero) {
-			return;
-		}
-
-		if ($this->fraction >= $fractionBeforeZero + 1) {
-			$this->fractionStore = $max;
-			$this->formatter->setAttribute($this->formatter::MAX_FRACTION_DIGITS, $fractionBeforeZero + 1);
-		}
-	}
-
 	private function fixNegativeSign(float|int $number): float|int
 	{
-		if ($this->fractionStore !== null) {
-			return $number;
-		}
-
 		if (!is_float($number)) {
 			return $number;
 		}
