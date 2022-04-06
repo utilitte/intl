@@ -10,9 +10,6 @@ final class FractionalStepper
 	/** @var array<int, int> */
 	public array $steps = [];
 
-	/** @var  */
-	private array $ranges;
-
 	private ?int $max = null;
 
 	private ?int $min = null;
@@ -89,11 +86,6 @@ final class FractionalStepper
 			$formatter->setAttribute($formatter::MIN_FRACTION_DIGITS, $this->min);
 			$formatter->setAttribute($formatter::MAX_FRACTION_DIGITS, $this->max);
 		}
-	}
-
-	private function decimalToNumber(int $decimals): float
-	{
-		return 1 / pow(10, $decimals);
 	}
 
 }
