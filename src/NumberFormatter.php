@@ -15,6 +15,8 @@ abstract class NumberFormatter
 
 	private ?int $fractionStore = null;
 
+	protected bool $percentFormatter = false;
+
 	public function __construct(
 		protected \NumberFormatter $formatter,
 	)
@@ -200,6 +202,10 @@ abstract class NumberFormatter
 		}
 
 		$max = max((int) $this->formatter->getAttribute($this->formatter::MAX_FRACTION_DIGITS), 0);
+
+		if ($this->percentFormatter) {
+			$max += 2;
+		}
 
 		$abs = abs($number);
 		$fractionBeforeZero = -1 - (int) floor(log10($abs));
