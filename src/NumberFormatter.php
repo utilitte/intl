@@ -31,14 +31,6 @@ abstract class NumberFormatter
 		return $clone;
 	}
 
-	public function withMiniatureFraction(int $fraction): static
-	{
-		$clone = clone $this;
-		$clone->fraction = $fraction;
-
-		return $clone;
-	}
-
 	public function withMaxDigits(int $digits): static
 	{
 		return $this->setAttribute($this->formatter::MAX_INTEGER_DIGITS, $digits);
