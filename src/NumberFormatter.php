@@ -81,6 +81,16 @@ abstract class NumberFormatter
 		return $this->setTextAttribute($this->formatter::NEGATIVE_PREFIX, $suffix, $type);
 	}
 
+	public function withSuffix(string $suffix, int $type = self::SUBSTITUTE): static
+	{
+		return $this->withNegativeSuffix($suffix, $type)->withPositiveSuffix($suffix, $type);
+	}
+
+	public function withPrefix(string $prefix, int $type = self::SUBSTITUTE): static
+	{
+		return $this->withNegativePrefix($prefix, $type)->withPositivePrefix($prefix, $type);
+	}
+
 	public function withPositiveSign(bool $display = true, int $type = self::PREPEND): static
 	{
 		return $this->withPositivePrefix($display ? '+' : '', $type);
@@ -117,26 +127,26 @@ abstract class NumberFormatter
 		return $this->format($number);
 	}
 
-	private function setAttribute(int $attribute, float|int $value): static
+	protected function setAttribute(int $attribute, float|int $value, bool $clone = true): static
 	{
 		if ($this->formatter->getAttribute($attribute) === $value) {
 			return $this;
 		}
 
-		$clone = clone $this;
-		$clone->formatter->setAttribute($attribute, $value);
+		$cloned = $clone ? clone $this : $this;
+		$cloned->formatter->setAttribute($attribute, $value);
 
-		return $clone;
+		return $cloned;
 	}
 
-	private function setTextAttribute(int $attribute, string $value, int $type): static
+	protected function setTextAttribute(int $attribute, string $value, int $type, bool $clone = true): static
 	{
 		$previous = (string) $this->formatter->getTextAttribute($attribute);
 		if ($previous === $value) {
 			return $this;
 		}
 
-		$clone = clone $this;
+		$cloned = $clone ? clone $this : $this;
 
 		$value = match ($type) {
 			self::APPEND => $previous . $value,
@@ -146,9 +156,9 @@ abstract class NumberFormatter
 			default => $value,
 		};
 
-		$clone->formatter->setTextAttribute($attribute, $value);
+		$cloned->formatter->setTextAttribute($attribute, $value);
 
-		return $clone;
+		return $cloned;
 	}
 
 	public function __clone(): void

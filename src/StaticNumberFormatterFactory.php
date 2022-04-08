@@ -31,4 +31,14 @@ final class StaticNumberFormatterFactory implements NumberFormatterFactory
 		return new PercentNumberFormatter($locale ?? $this->locale);
 	}
 
+	public function createShort(?string $locale = null): ShortNumberFormatter
+	{
+		return new ShortNumberFormatter($locale ?? $this->locale);
+	}
+
+	public function createByte(?string $locale = null): ByteNumberFormatter
+	{
+		return new ByteNumberFormatter($locale);
+	}
+
 }

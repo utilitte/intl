@@ -13,4 +13,8 @@ interface NumberFormatterFactory
 
 	public function createPercent(?string $locale = null): PercentNumberFormatter;
 
+	public function createShort(?string $locale = null): ShortNumberFormatter;
+
+	public function createByte(?string $locale = null): ByteNumberFormatter;
+
 }
