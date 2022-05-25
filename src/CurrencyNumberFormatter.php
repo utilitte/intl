@@ -7,7 +7,12 @@ class CurrencyNumberFormatter extends NumberFormatter
 
 	public function __construct(string $locale)
 	{
-		parent::__construct(new \NumberFormatter($locale, \NumberFormatter::CURRENCY));
+		parent::__construct($locale, \NumberFormatter::CURRENCY);
+	}
+
+	public function formatCurrency(int|float $value, string $currency): string
+	{
+		return parent::formatCurrency($value, $currency);
 	}
 
 }

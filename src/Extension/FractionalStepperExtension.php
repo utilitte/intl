@@ -1,18 +1,14 @@
 <?php declare(strict_types = 1);
 
-namespace Utilitte\Intl\Stepper;
+namespace Utilitte\Intl\Extension;
 
-use NumberFormatter;
+use Utilitte\Intl\Decorator\NumberFormatter;
 
-final class FractionalStepper
+final class FractionalStepperExtension implements NumberFormatterExtension
 {
 
 	/** @var array<int, int> */
 	public array $steps = [];
-
-	private ?int $max = null;
-
-	private ?int $min = null;
 
 	public static function create(): self
 	{
@@ -27,7 +23,7 @@ final class FractionalStepper
 	}
 
 	/**
-	 * @return array{float, float, int, int}[]
+	 * @return array{int, int}[]
 	 */
 	private function getRanges(): array
 	{
@@ -41,13 +37,10 @@ final class FractionalStepper
 		}
 
 		return $ranges;
- 	}
+	}
 
-	public function apply(NumberFormatter $formatter, int|float $number): void
+	public function invoke(int|float $number, NumberFormatter $formatter): void
 	{
-		$this->max = null;
-		$this->min = null;
-
 		if (is_int($number)) {
 			return;
 		}
@@ -72,20 +65,14 @@ final class FractionalStepper
 		}
 
 		if ($candidate) {
-			$this->max = $max;
-			$this->min = $min;
-
 			$formatter->setAttribute($formatter::MIN_FRACTION_DIGITS, $candidate[0]);
 			$formatter->setAttribute($formatter::MAX_FRACTION_DIGITS, $candidate[1]);
 		}
-	}
 
-	public function rollback(NumberFormatter $formatter): void
-	{
-		if ($this->max !== null && $this->min !== null) {
-			$formatter->setAttribute($formatter::MIN_FRACTION_DIGITS, $this->min);
-			$formatter->setAttribute($formatter::MAX_FRACTION_DIGITS, $this->max);
-		}
+		NumberFormatterFiber::nextStep();
+
+		$formatter->setAttribute($formatter::MAX_FRACTION_DIGITS, $max);
+		$formatter->setAttribute($formatter::MIN_FRACTION_DIGITS, $min);
 	}
 
 }

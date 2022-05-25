@@ -7,7 +7,7 @@ class PatternNumberFormatter extends NumberFormatter
 
 	public function __construct(string $locale, string $pattern)
 	{
-		parent::__construct(new \NumberFormatter($locale, \NumberFormatter::DECIMAL));
+		parent::__construct($locale, \NumberFormatter::DECIMAL);
 
 		$this->formatter->setPattern($pattern);
 	}

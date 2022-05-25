@@ -6,7 +6,7 @@ final class StaticNumberFormatterFactory implements NumberFormatterFactory
 {
 
 	public function __construct(
-		private string $locale = 'en-US',
+		private readonly string $locale = 'en-US',
 	)
 	{
 	}
@@ -38,7 +38,7 @@ final class StaticNumberFormatterFactory implements NumberFormatterFactory
 
 	public function createByte(?string $locale = null): ByteNumberFormatter
 	{
-		return new ByteNumberFormatter($locale);
+		return new ByteNumberFormatter($locale ?? $this->locale);
 	}
 
 }

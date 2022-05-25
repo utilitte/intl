@@ -2,7 +2,8 @@
 
 namespace Utilitte\Intl;
 
-use Utilitte\Intl\Stepper\FractionalStepper;
+use Utilitte\Intl\Extension\NegativeZeroFixExtension;
+use Utilitte\Intl\Extension\NumberFormatterExtension;
 
 abstract class NumberFormatter
 {
@@ -13,20 +14,23 @@ abstract class NumberFormatter
 	public const PREPEND_WITH_SPACE = 3;
 	public const SUBSTITUTE = 4;
 
-	protected bool $percentFormatter = false;
+	protected Decorator\NumberFormatter $formatter;
 
-	private ?FractionalStepper $fractionStepper = null;
+	/** @var NumberFormatterExtension[] */
+	protected array $extensions = [];
 
-	public function __construct(
-		protected \NumberFormatter $formatter,
-	)
+	public function __construct(string $locale, int $style)
 	{
+		$this->formatter = new Decorator\NumberFormatter($locale, $style);
+		$this->extensions = [
+			new NegativeZeroFixExtension(),
+		];
 	}
 
-	public function withFractionalStepper(FractionalStepper $fractionalStepper): static
+	public function withExtension(NumberFormatterExtension $extension): static
 	{
 		$clone = clone $this;
-		$clone->fractionStepper = $fractionalStepper;
+		$clone->extensions[] = $extension;
 
 		return $clone;
 	}
@@ -98,19 +102,10 @@ abstract class NumberFormatter
 
 	public function format(int|float $number): string
 	{
-		// before
-		$this->fractionStepper?->apply($this->formatter, $number);
-
-		// format
-		$formatted = $this->formatter->format($this->fixNegativeSign($number));
-
-		// after
-		$this->fractionStepper?->rollback($this->formatter);
-
-		return $formatted;
+		return $this->formatter->format($number, extensions: $this->extensions);
 	}
 
-	public function formatExtended(int|float|string $number): string
+	public function formatString(int|float|string $number): string
 	{
 		if (is_string($number)) {
 			if (!is_numeric($number)) {
@@ -125,6 +120,11 @@ abstract class NumberFormatter
 		}
 
 		return $this->format($number);
+	}
+
+	protected function formatCurrency(int|float $number, string $currency): string
+	{
+		return $this->formatter->formatCurrency($number, $currency, $this->extensions);
 	}
 
 	protected function setAttribute(int $attribute, float|int $value, bool $clone = true): static
@@ -164,32 +164,6 @@ abstract class NumberFormatter
 	public function __clone(): void
 	{
 		$this->formatter = clone $this->formatter;
-	}
-
-	private function fixNegativeSign(float|int $number): float|int
-	{
-		if (!is_float($number)) {
-			return $number;
-		}
-
-		if ($number > 0 && $number >= -1) {
-			return $number;
-		}
-
-		$max = max((int) $this->formatter->getAttribute($this->formatter::MAX_FRACTION_DIGITS), 0);
-
-		if ($this->percentFormatter) {
-			$max += 2;
-		}
-
-		$abs = abs($number);
-		$fractionBeforeZero = -1 - (int) floor(log10($abs));
-
-		if ($max > $fractionBeforeZero) {
-			return $number;
-		}
-
-		return $abs;
 	}
 
 }

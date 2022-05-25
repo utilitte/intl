@@ -12,7 +12,7 @@ class ByteNumberFormatter extends NumberFormatter
 
 	public function __construct(string $locale)
 	{
-		parent::__construct(new \NumberFormatter($locale, \NumberFormatter::DECIMAL));
+		parent::__construct($locale, \NumberFormatter::DECIMAL);
 
 		$this->formatter->setAttribute($this->formatter::MIN_FRACTION_DIGITS, 0);
 		$this->formatter->setAttribute($this->formatter::MAX_FRACTION_DIGITS, 0);
