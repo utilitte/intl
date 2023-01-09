@@ -47,9 +47,13 @@ class ShortNumberFormatter extends NumberFormatter
 			$divider = $limit;
 		}
 
-		$this->setTextAttribute($this->formatter::POSITIVE_SUFFIX, $this->prefix . $unit, self::PREPEND, false);
-		$this->setTextAttribute($this->formatter::NEGATIVE_SUFFIX, $this->prefix . $unit, self::PREPEND, false);
+		return $this->setTextAttribute($this->formatter::POSITIVE_SUFFIX, $this->prefix . $unit, self::PREPEND)
+			->setTextAttribute($this->formatter::NEGATIVE_SUFFIX, $this->prefix . $unit, self::PREPEND)
+			->formatParent($number);
+	}
 
+	private function formatParent(float|int $number): string
+	{
 		return parent::format($number);
 	}
 
