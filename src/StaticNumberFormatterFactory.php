@@ -6,7 +6,7 @@ final class StaticNumberFormatterFactory implements NumberFormatterFactory
 {
 
 	public function __construct(
-		private readonly string $locale = 'en-US',
+		private readonly string $locale = 'en_US',
 	)
 	{
 	}
