@@ -34,8 +34,12 @@ class ShortNumberFormatter extends NumberFormatter
 	public function format(float|int $number): string
 	{
 		$unit = '';
+		$lessThanZero = $number < 0;
 
 		$divider = 1;
+
+		$number = abs($number);
+
 		foreach (self::UNITS as $str => $limit) {
 			if ($limit === null || $number < $limit) {
 				$unit = $str;
@@ -45,6 +49,10 @@ class ShortNumberFormatter extends NumberFormatter
 			}
 
 			$divider = $limit;
+		}
+
+		if ($lessThanZero) {
+			$number = -$number;
 		}
 
 		return $this->setTextAttribute($this->formatter::POSITIVE_SUFFIX, $this->prefix . $unit, self::PREPEND)
